@@ -1,6 +1,10 @@
 module.exports = function(api) {
 	api.cache(true);
 
+	const targets = {
+		"esmodules": true
+	};
+
 	let presets;
 
 	if (process.env.NODE_ENV === 'es') {
@@ -8,14 +12,18 @@ module.exports = function(api) {
 			[
 				"@babel/preset-env",
 				{
-					"modules": false
+					"modules": false,
+					"targets": targets
 				}
 			]
 		];
 	} else if (process.env.NODE_ENV === 'umd') {
 		presets = [
 			[
-				"@babel/preset-env"
+				"@babel/preset-env",
+				{
+					"targets": targets
+				}
 			]
 		];
 	}
