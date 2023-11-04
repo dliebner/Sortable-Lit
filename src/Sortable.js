@@ -91,15 +91,102 @@ function _dispatchEvent(info) {
 	});
 }
 
+	
+/*****************************
+ * Begin Lit customizations  *
+ * * * * * * * * * * * * * * */
 
-let dragEl,
+/** @param {Element} node */
+function isEmptyCommentNode( node ) {
+
+	return node && node.nodeType === Node.COMMENT_NODE && node.nodeValue.trim() === '';
+
+}
+/**
+ * @param {Element} node
+ * @returns {Element[]|void} The Lit element and wrapping comments if it is a Lit element, otherwise `void`
+ * */
+function getLitNodes( node ) {
+
+	if( isEmptyCommentNode( node.previousSibling ) && isEmptyCommentNode( node.nextSibling ) ) {
+
+		return [node.previousSibling, node, node.nextSibling];
+
+	}
+
+}
+
+/**
+ * @param {Element} parentEl 
+ * @param {Element} newNode 
+ * @param {Element} referenceNode 
+ */
+function insertBefore(parentEl, newNode, referenceNode) {
+
+	let referenceTarget = referenceNode;
+	const newNodes = getLitNodes(newNode) ?? [newNode];
+
+	if( getLitNodes(referenceNode) ) {
+
+		// Insert before the Lit comment
+		referenceTarget = referenceNode.previousSibling;
+
+	}
+
+	for( const node of newNodes ) {
+
+		parentEl.insertBefore(node, referenceTarget);
+
+	}
+
+	return newNode;
+
+}
+
+/**
+ * @param {Element} parentEl 
+ * @param {Element} newNode 
+ */
+function appendChild(parentEl, newNode) {
+
+	const newNodes = getLitNodes(newNode) ?? [newNode];
+
+	for( const node of newNodes ) {
+
+		parentEl.appendChild(node);
+
+	}
+
+	return newNode;
+
+}
+
+/**
+ * @param {Element} parentEl 
+ * @param {Element} childNode 
+ */
+function removeChild(parentEl, childNode) {
+
+	const removedChildren = getLitNodes(childNode) ?? [childNode];
+
+	for( const el of removedChildren ) {
+
+		parentEl.removeChild(el);
+
+	}
+
+	return removedChildren;
+
+}
+
+let /** The original element */dragEl,
 	parentEl,
-	ghostEl,
+	/** A clone of the `dragEl` */ghostEl,
 	rootEl,
 	nextEl,
 	lastDownEl,
 
-	cloneEl,
+	/** A clone of the `dragEl` */cloneEl,
 	cloneHidden,
 
 	oldIndex,
@@ -941,7 +1028,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			if (Sortable.eventCanceled) return;
 
 			if (!_this.options.removeCloneOnHide) {
-				rootEl.insertBefore(cloneEl, dragEl);
+				insertBefore(rootEl, cloneEl, dragEl);
 			}
 			_this._hideClone();
 
@@ -1158,9 +1245,9 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 				if (!Sortable.eventCanceled) {
 					if (nextEl) {
-						rootEl.insertBefore(dragEl, nextEl);
+						insertBefore(rootEl, dragEl, nextEl);
 					} else {
-						rootEl.appendChild(dragEl);
+						appendChild(rootEl, dragEl);
 					}
 				}
 
@@ -1189,10 +1276,10 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 				if (onMove(rootEl, el, dragEl, dragRect, target, targetRect, evt, !!target) !== false) {
 					capture();
 					if (elLastChild && elLastChild.nextSibling) { // the last draggable element is not the last node
-						el.insertBefore(dragEl, elLastChild.nextSibling);
+						insertBefore(el, dragEl, elLastChild.nextSibling);
 					}
 					else {
-						el.appendChild(dragEl);
+						appendChild(el, dragEl);
 					}
 					parentEl = el; // actualization
 
@@ -1211,7 +1298,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 				if (onMove(rootEl, el, dragEl, dragRect, target, targetRect, evt, false) !== false) {
 					capture();
-					el.insertBefore(dragEl, firstChild);
+					insertBefore(el, dragEl, firstChild);
 					parentEl = el; // actualization
 
 					changed();
@@ -1284,9 +1371,9 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 					capture();
 
 					if (after && !nextSibling) {
-						el.appendChild(dragEl);
+						appendChild(el, dragEl);
 					} else {
-						target.parentNode.insertBefore(dragEl, after ? nextSibling : target);
+						insertBefore(target.parentNode, dragEl, after ? nextSibling : target);
 					}
 
 					// Undo chrome's scroll adjustment (has no effect on other browsers)
@@ -1390,11 +1477,11 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 				!options.dropBubble && evt.stopPropagation();
 			}
 
-			ghostEl && ghostEl.parentNode && ghostEl.parentNode.removeChild(ghostEl);
+			ghostEl && ghostEl.parentNode && ghostEl.parentNode.removeChild(ghostEl); // ghostEl is a clone, don't have to worry about Lit comments
 
 			if (rootEl === parentEl || (putSortable && putSortable.lastPutMode !== 'clone')) {
 				// Remove clone(s)
-				cloneEl && cloneEl.parentNode && cloneEl.parentNode.removeChild(cloneEl);
+				cloneEl && cloneEl.parentNode && cloneEl.parentNode.removeChild(cloneEl); // cloneEl is a clone, don't have to worry about Lit comments
 			}
 
 			if (dragEl) {
@@ -1606,12 +1693,21 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		}, this);
 
 		useAnimation && this.captureAnimationState();
+
+		const docFrag = document.createDocumentFragment();
+
 		order.forEach(function (id) {
 			if (items[id]) {
-				rootEl.removeChild(items[id]);
-				rootEl.appendChild(items[id]);
+				for( const removedChild of removeChild(rootEl, items[id]) ) {
+
+					docFrag.appendChild( removedChild );
+
+				}
 			}
 		});
+
+		rootEl.appendChild( docFrag );
+
 		useAnimation && this.animateAll();
 	},
 
@@ -1701,7 +1797,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 			css(cloneEl, 'display', 'none');
 			if (this.options.removeCloneOnHide && cloneEl.parentNode) {
-				cloneEl.parentNode.removeChild(cloneEl);
+				cloneEl.parentNode.removeChild(cloneEl); // cloneEl is a clone, don't have to worry about Lit comments
 			}
 			cloneHidden = true;
 		}
@@ -1720,11 +1816,11 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 			// show clone at dragEl or original position
 			if (dragEl.parentNode == rootEl && !this.options.group.revertClone) {
-				rootEl.insertBefore(cloneEl, dragEl);
+				insertBefore(rootEl, cloneEl, dragEl);
 			} else if (nextEl) {
-				rootEl.insertBefore(cloneEl, nextEl);
+				insertBefore(rootEl, cloneEl, nextEl);
 			} else {
-				rootEl.appendChild(cloneEl);
+				appendChild(rootEl, cloneEl);
 			}
 
 			if (this.options.group.revertClone) {
