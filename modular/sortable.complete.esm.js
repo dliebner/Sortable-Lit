@@ -3667,7 +3667,7 @@ function MultiDragPlugin() {
     // Handle non-drag tap
     tap(_ref13) {
       var {
-        evt,
+        originalEvent: evt,
         targetEl,
         sortable,
         putSortable,
