@@ -1482,11 +1482,7 @@ Sortable.prototype =
           downCoords = [touchLike.clientX, touchLike.clientY];
 
       var _tapUpHandler = e => {
-        var touch = getTouchFromEvt(e),
-            touchLike = touch || e;
-        console.log(e, touch);
-
-        if (e.type !== 'touchcancel' && Math.hypot(touchLike.clientX - downCoords[0], touchLike.clientY - downCoords[1]) <= 3) {
+        if (e.type !== 'pointercancel' && Math.hypot(e.clientX - downCoords[0], e.clientY - downCoords[1]) <= 3) {
           // pointer moved <= 3 pixels
           e.preventDefault(); // Fire a 'tap' event for plugins to act upon.
 
@@ -1499,14 +1495,12 @@ Sortable.prototype =
           });
         }
 
-        document.removeEventListener('mouseup', _tapUpHandler);
-        document.removeEventListener('touchend', _tapUpHandler);
-        document.removeEventListener('touchcancel', _tapUpHandler);
+        document.removeEventListener('pointerup', _tapUpHandler);
+        document.removeEventListener('pointercancel', _tapUpHandler);
       };
 
-      document.addEventListener('mouseup', _tapUpHandler);
-      document.addEventListener('touchend', _tapUpHandler);
-      document.addEventListener('touchcancel', _tapUpHandler);
+      document.addEventListener('pointerup', _tapUpHandler);
+      document.addEventListener('pointercancel', _tapUpHandler);
       return;
     } // Prepare `dragstart`
 
