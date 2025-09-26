@@ -372,7 +372,7 @@ function MultiDragPlugin() {
 		},
 
 		// Handle non-drag tap
-		tap({ evt, targetEl, sortable, putSortable, rootEl, parentEl }) {
+		tap({ originalEvent: evt, targetEl, sortable, putSortable, rootEl, parentEl }) {
 			this._handleSelect({evt, targetEl, sortable, putSortable, rootEl, parentEl });
 		},
 
