@@ -1487,7 +1487,7 @@ Sortable.prototype =
           e.preventDefault(); // Fire a 'tap' event for plugins to act upon.
 
           pluginEvent('tap', this, {
-            e,
+            evt: e,
             targetEl: target,
             putSortable: this,
             rootEl: this.el,
