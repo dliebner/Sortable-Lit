@@ -49,6 +49,7 @@ let pluginEvent = function(eventName, sortable, { evt: originalEvent, ...data } 
 		cloneEl,
 		cloneHidden,
 		dragStarted: moved,
+		dragAbortedByMove,
 		putSortable,
 		activeSortable: Sortable.active,
 		originalEvent,
@@ -198,6 +199,7 @@ let /** The original element */dragEl,
 	putSortable,
 
 	awaitingDragStarted = false,
+	dragAbortedByMove = false,
 	ignoreNextClick = false,
 	sortables = [],
 
@@ -750,6 +752,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		if (Math.max(Math.abs(touch.clientX - this._lastX), Math.abs(touch.clientY - this._lastY))
 				>= Math.floor(this.options.touchStartThreshold / (this.nativeDraggable && window.devicePixelRatio || 1))
 		) {
+			dragAbortedByMove = true;
 			this._disableDelayedDrag();
 		}
 	},
@@ -802,7 +805,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 	_dragStarted: function (fallback, evt) {
 		let _this = this;
-		awaitingDragStarted = false;
+		awaitingDragStarted = dragAbortedByMove = false;
 		if (rootEl && dragEl) {
 			pluginEvent('dragStarted', this, { evt });
 
@@ -1063,6 +1066,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		}
 
 		awaitingDragStarted = true;
+		dragAbortedByMove = false;
 
 		_this._dragStartId = _nextTick(_this._dragStarted.bind(_this, fallback, evt));
 		on(document, 'selectstart', _this);
@@ -1445,8 +1449,9 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			return;
 		}
 
-		awaitingDragStarted = false;
-		isCircumstantialInvert = false;
+		awaitingDragStarted =
+		dragAbortedByMove =
+		isCircumstantialInvert =
 		pastFirstInvertThresh = false;
 
 		clearInterval(this._loopId);

@@ -300,7 +300,7 @@ function MultiDragPlugin() {
 			}
 		},
 
-		drop({ originalEvent: evt, rootEl, parentEl, sortable, dispatchSortableEvent, oldIndex, putSortable }) {
+		drop({ originalEvent: evt, rootEl, parentEl, sortable, dispatchSortableEvent, oldIndex, dragAbortedByMove, putSortable }) {
 			let toSortable = (putSortable || this.sortable);
 
 			if (!evt) return;
@@ -309,7 +309,7 @@ function MultiDragPlugin() {
 				children = parentEl.children;
 
 			// Multi-drag selection
-			if (!dragStarted) {
+			if (!dragStarted && !dragAbortedByMove) {
 				if (options.multiDragKey && !this.multiDragKeyDown) {
 					this._deselectMultiDrag();
 				}
