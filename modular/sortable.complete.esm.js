@@ -1505,7 +1505,7 @@ Sortable.prototype =
       rootEl = el;
       dragEl = target;
       parentEl = dragEl.parentNode;
-      nextEl = dragEl.nextSibling;
+      nextEl = dragEl.nextElementSibling;
       lastDownEl = target;
       activeGroup = options.group;
       console.log(rootEl, dragEl, parentEl, nextEl, lastDownEl, activeGroup);
@@ -2093,9 +2093,9 @@ Sortable.prototype =
         if (onMove(rootEl, el, dragEl, dragRect, target, targetRect, evt, !!target) !== false) {
           capture();
 
-          if (elLastChild && elLastChild.nextSibling) {
+          if (elLastChild && elLastChild.nextElementSibling) {
             // the last draggable element is not the last node
-            insertBefore(el, dragEl, elLastChild.nextSibling);
+            insertBefore(el, dragEl, elLastChild.nextElementSibling);
           } else {
             appendChild(el, dragEl);
           }
