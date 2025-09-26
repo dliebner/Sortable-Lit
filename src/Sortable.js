@@ -813,6 +813,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 	_dragStarted: function (fallback, evt) {
 		let _this = this;
 		awaitingDragStarted = dragAbortedByMove = false;
+		console.log('drag started?', rootEl, dragEl);
 		if (rootEl && dragEl) {
 			pluginEvent('dragStarted', this, { evt });
 
@@ -1017,7 +1018,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		pluginEvent('dragStart', this, { evt });
 		if (Sortable.eventCanceled) {
 			this._onDrop();
-			return;
+			return console.log('eventCanceled 3');
 		}
 
 		pluginEvent('setupClone', this);
@@ -1036,7 +1037,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		// #1143: IFrame support workaround
 		_this.cloneId = _nextTick(function() {
 			pluginEvent('clone', _this);
-			if (Sortable.eventCanceled) return;
+			if (Sortable.eventCanceled) return console.log('eventCanceled 4');
 
 			if (!_this.options.removeCloneOnHide) {
 				insertBefore(rootEl, cloneEl, dragEl);
@@ -1055,6 +1056,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		// Set proper drop events
 		if (fallback) {
 			ignoreNextClick = evt.type !== 'touchmove'; // on mobile, the click event is not executed after a drop (touchmove)
+			console.log('ignoreNextClick', ignoreNextClick);
 			_this._loopId = setInterval(_this._emulateDragOver, 50);
 		} else {
 			// Undo what was set in _prepareDragStart before drag started

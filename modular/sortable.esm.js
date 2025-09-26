@@ -1655,6 +1655,7 @@ Sortable.prototype =
   _dragStarted: function _dragStarted(fallback, evt) {
 
     awaitingDragStarted = dragAbortedByMove = false;
+    console.log('drag started?', rootEl, dragEl);
 
     if (rootEl && dragEl) {
       pluginEvent('dragStarted', this, {
@@ -1845,7 +1846,7 @@ Sortable.prototype =
     if (Sortable.eventCanceled) {
       this._onDrop();
 
-      return;
+      return console.log('eventCanceled 3');
     }
 
     pluginEvent('setupClone', this);
@@ -1864,7 +1865,7 @@ Sortable.prototype =
 
     _this.cloneId = _nextTick(function () {
       pluginEvent('clone', _this);
-      if (Sortable.eventCanceled) return;
+      if (Sortable.eventCanceled) return console.log('eventCanceled 4');
 
       if (!_this.options.removeCloneOnHide) {
         insertBefore(rootEl, cloneEl, dragEl);
@@ -1882,6 +1883,7 @@ Sortable.prototype =
     if (fallback) {
       ignoreNextClick = evt.type !== 'touchmove'; // on mobile, the click event is not executed after a drop (touchmove)
 
+      console.log('ignoreNextClick', ignoreNextClick);
       _this._loopId = setInterval(_this._emulateDragOver, 50);
     } else {
       // Undo what was set in _prepareDragStart before drag started
