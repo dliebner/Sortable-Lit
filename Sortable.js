@@ -1875,8 +1875,7 @@
       !fallback && toggleClass(dragEl, options.dragClass, true); // Set proper drop events
 
       if (fallback) {
-        ignoreNextClick = evt.type !== 'touchmove'; // on mobile, the click event is not executed after a drop (touchmove)
-
+        ignoreNextClick = true;
         _this._loopId = setInterval(_this._emulateDragOver, 50);
       } else {
         // Undo what was set in _prepareDragStart before drag started
