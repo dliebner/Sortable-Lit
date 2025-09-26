@@ -1476,6 +1476,15 @@ Sortable.prototype =
     }
 
     if (options.handle && !closest(originalTarget, options.handle, el, false)) {
+      // This is a click outside a handle. It's not a drag, but it could be a selection tap.
+      // Fire a 'tap' event for plugins to act upon.
+      pluginEvent('tap', this, {
+        evt,
+        targetEl: target,
+        putSortable: this,
+        rootEl: this.el,
+        parentEl: target.parentNode
+      });
       return;
     } // Prepare `dragstart`
 
@@ -3580,7 +3589,106 @@ function MultiDragPlugin() {
       }
     },
 
-    drop(_ref12) {
+    _handleSelect(_ref12) {
+      var {
+        evt,
+        targetEl,
+        sortable,
+        putSortable,
+        rootEl,
+        parentEl
+      } = _ref12;
+      var options = this.options,
+          children = parentEl.children,
+          toSortable = putSortable || this.sortable;
+
+      if (options.multiDragKey && !this.multiDragKeyDown) {
+        this._deselectMultiDrag();
+      }
+
+      toggleClass(targetEl, options.selectedClass, !~multiDragElements.indexOf(targetEl));
+
+      if (!~multiDragElements.indexOf(targetEl)) {
+        multiDragElements.push(targetEl);
+        dispatchEvent({
+          sortable,
+          rootEl,
+          name: 'select',
+          targetEl,
+          originalEvent: evt
+        }); // Modifier activated, select from last to targetEl
+
+        if (evt.shiftKey && lastMultiDragSelect && sortable.el.contains(lastMultiDragSelect)) {
+          var lastIndex = index(lastMultiDragSelect),
+              currentIndex = index(targetEl);
+
+          if (~lastIndex && ~currentIndex && lastIndex !== currentIndex) {
+            // Must include lastMultiDragSelect (select it), in case modified selection from no selection
+            // (but previous selection existed)
+            var n, i;
+
+            if (currentIndex > lastIndex) {
+              i = lastIndex;
+              n = currentIndex;
+            } else {
+              i = currentIndex;
+              n = lastIndex + 1;
+            }
+
+            for (; i < n; i++) {
+              if (~multiDragElements.indexOf(children[i])) continue;
+              toggleClass(children[i], options.selectedClass, true);
+              multiDragElements.push(children[i]);
+              dispatchEvent({
+                sortable,
+                rootEl,
+                name: 'select',
+                targetEl: children[i],
+                originalEvent: evt
+              });
+            }
+          }
+        } else {
+          lastMultiDragSelect = targetEl;
+        }
+
+        multiDragSortable = toSortable;
+      } else {
+        multiDragElements.splice(multiDragElements.indexOf(targetEl), 1);
+        lastMultiDragSelect = null;
+        dispatchEvent({
+          sortable,
+          rootEl,
+          name: 'deselect',
+          targetEl,
+          originalEvent: evt
+        });
+      }
+    },
+
+    // Handle non-drag tap
+    tap(_ref13) {
+      var {
+        evt,
+        targetEl,
+        sortable,
+        putSortable,
+        rootEl,
+        parentEl
+      } = _ref13;
+
+      this._handleSelect({
+        evt,
+        targetEl,
+        sortable,
+        putSortable,
+        rootEl,
+        parentEl
+      });
+    },
+
+    // Handle drop
+    drop(_ref14) {
       var {
         originalEvent: evt,
         rootEl,
@@ -3590,75 +3698,21 @@ function MultiDragPlugin() {
         oldIndex,
         dragAbortedByMove,
         putSortable
-      } = _ref12;
+      } = _ref14;
       var toSortable = putSortable || this.sortable;
       if (!evt) return;
       var options = this.options,
           children = parentEl.children; // Multi-drag selection
 
       if (!dragStarted && !dragAbortedByMove) {
-        if (options.multiDragKey && !this.multiDragKeyDown) {
-          this._deselectMultiDrag();
-        }
-
-        toggleClass(dragEl$1, options.selectedClass, !~multiDragElements.indexOf(dragEl$1));
-
-        if (!~multiDragElements.indexOf(dragEl$1)) {
-          multiDragElements.push(dragEl$1);
-          dispatchEvent({
-            sortable,
-            rootEl,
-            name: 'select',
-            targetEl: dragEl$1,
-            originalEvent: evt
-          }); // Modifier activated, select from last to dragEl
-
-          if (evt.shiftKey && lastMultiDragSelect && sortable.el.contains(lastMultiDragSelect)) {
-            var lastIndex = index(lastMultiDragSelect),
-                currentIndex = index(dragEl$1);
-
-            if (~lastIndex && ~currentIndex && lastIndex !== currentIndex) {
-              // Must include lastMultiDragSelect (select it), in case modified selection from no selection
-              // (but previous selection existed)
-              var n, i;
-
-              if (currentIndex > lastIndex) {
-                i = lastIndex;
-                n = currentIndex;
-              } else {
-                i = currentIndex;
-                n = lastIndex + 1;
-              }
-
-              for (; i < n; i++) {
-                if (~multiDragElements.indexOf(children[i])) continue;
-                toggleClass(children[i], options.selectedClass, true);
-                multiDragElements.push(children[i]);
-                dispatchEvent({
-                  sortable,
-                  rootEl,
-                  name: 'select',
-                  targetEl: children[i],
-                  originalEvent: evt
-                });
-              }
-            }
-          } else {
-            lastMultiDragSelect = dragEl$1;
-          }
-
-          multiDragSortable = toSortable;
-        } else {
-          multiDragElements.splice(multiDragElements.indexOf(dragEl$1), 1);
-          lastMultiDragSelect = null;
-          dispatchEvent({
-            sortable,
-            rootEl,
-            name: 'deselect',
-            targetEl: dragEl$1,
-            originalEvent: evt
-          });
-        }
+        this._handleSelect({
+          evt,
+          targetEl: dragEl$1,
+          sortable,
+          putSortable,
+          rootEl,
+          parentEl
+        });
       } // Multi-drag drop
 
 
