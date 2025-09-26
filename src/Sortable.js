@@ -661,8 +661,6 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			lastDownEl = target;
 			activeGroup = options.group;
 
-			console.log(rootEl, dragEl, parentEl, nextEl, lastDownEl, activeGroup);
-
 			Sortable.dragged = dragEl;
 
 			tapEvt = {
@@ -681,7 +679,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 				pluginEvent('delayEnded', _this, { evt });
 				if (Sortable.eventCanceled) {
 					_this._onDrop();
-					return console.log('eventCanceled');
+					return;
 				}
 				// Delayed drag has been triggered
 				// we can re-enable the events: touchmove/mousemove
@@ -730,7 +728,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			if (options.delay && (!options.delayOnTouchOnly || touch) && (!this.nativeDraggable || !(Edge || IE11OrLess))) {
 				if (Sortable.eventCanceled) {
 					this._onDrop();
-					return console.log('eventCanceled 2');
+					return;
 				}
 				// If the user moves the pointer or let go the click or touch
 				// before the delay has been reached:
@@ -808,7 +806,6 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 	_dragStarted: function (fallback, evt) {
 		let _this = this;
 		awaitingDragStarted = dragAbortedByMove = false;
-		console.log('drag started?', rootEl, dragEl);
 		if (rootEl && dragEl) {
 			pluginEvent('dragStarted', this, { evt });
 
@@ -883,7 +880,6 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 
 	_onTouchMove: function (/**TouchEvent*/evt) {
-		console.log({tapEvt, ghostEl});
 		if (tapEvt) {
 			let	options = this.options,
 				fallbackTolerance = options.fallbackTolerance,
@@ -905,7 +901,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 				if (fallbackTolerance &&
 					Math.max(Math.abs(touch.clientX - this._lastX), Math.abs(touch.clientY - this._lastY)) < fallbackTolerance
 				) {
-					return console.log('are not actually dragging?');
+					return;
 				}
 				this._onDragStart(evt, true);
 			}
@@ -945,7 +941,6 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 	_appendGhost: function () {
 		// Bug if using scale(): https://stackoverflow.com/questions/2637058
 		// Not being adjusted for
-		console.log('_appendGhost', !!ghostEl);
 		if (!ghostEl) {
 			let container = this.options.fallbackOnBody ? document.body : rootEl,
 				rect = getRect(dragEl, true, PositionGhostAbsolutely, true, container),
@@ -1001,8 +996,6 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 			container.appendChild(ghostEl);
 
-			console.log('created ghostEl', ghostEl);
-
 			// Set transform-origin
 			css(ghostEl, 'transform-origin', (tapDistanceLeft / parseInt(ghostEl.style.width) * 100) + '% ' + (tapDistanceTop / parseInt(ghostEl.style.height) * 100) + '%');
 		}
@@ -1016,7 +1009,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		pluginEvent('dragStart', this, { evt });
 		if (Sortable.eventCanceled) {
 			this._onDrop();
-			return console.log('eventCanceled 3');
+			return;
 		}
 
 		pluginEvent('setupClone', this);
@@ -1035,7 +1028,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		// #1143: IFrame support workaround
 		_this.cloneId = _nextTick(function() {
 			pluginEvent('clone', _this);
-			if (Sortable.eventCanceled) return console.log('eventCanceled 4');
+			if (Sortable.eventCanceled) return;
 
 			if (!_this.options.removeCloneOnHide) {
 				insertBefore(rootEl, cloneEl, dragEl);
@@ -1054,7 +1047,6 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		// Set proper drop events
 		if (fallback) {
 			ignoreNextClick = evt.type !== 'touchmove'; // on mobile, the click event is not executed after a drop (touchmove)
-			console.log('ignoreNextClick', ignoreNextClick);
 			_this._loopId = setInterval(_this._emulateDragOver, 50);
 		} else {
 			// Undo what was set in _prepareDragStart before drag started
@@ -1416,7 +1408,6 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 	_ignoreWhileAnimating: null,
 
 	_offMoveEvents: function() {
-		console.trace('_offMoveEvents');
 		off(document, 'mousemove', this._onTouchMove);
 		off(document, 'touchmove', this._onTouchMove);
 		off(document, 'pointermove', this._onTouchMove);
@@ -1438,8 +1429,6 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 	_onDrop: function (/**Event*/evt) {
 		let el = this.el,
 			options = this.options;
-
-		console.log('onDrop called');
 
 		// Get the index of the dragged element within its parent
 		newIndex = index(dragEl);
