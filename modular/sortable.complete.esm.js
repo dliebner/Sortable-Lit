@@ -2234,7 +2234,8 @@ Sortable.prototype =
   /**Event*/
   evt) {
     var el = this.el,
-        options = this.options; // Get the index of the dragged element within its parent
+        options = this.options;
+    console.log('onDrop called'); // Get the index of the dragged element within its parent
 
     newIndex = index(dragEl);
     newDraggableIndex = index(dragEl, options.draggable);
