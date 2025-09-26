@@ -548,7 +548,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 	},
 
 	_onTapStart: function (/** Event|TouchEvent */evt) {
-		if (!evt.cancelable) return;
+		if (!evt.cancelable) return console.log('not cancelable');
 		let _this = this,
 			el = this.el,
 			options = this.options,
@@ -564,33 +564,33 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 		// Don't trigger start event when an element is been dragged, otherwise the evt.oldindex always wrong when set option.group.
 		if (dragEl) {
-			return;
+			return console.log('dragEl set');
 		}
 
 		if (/mousedown|pointerdown/.test(type) && evt.button !== 0 || options.disabled) {
-			return; // only left button and enabled
+			return console.log('only left button and enabled'); // only left button and enabled
 		}
 
 		// cancel dnd if original target is content editable
 		if (originalTarget.isContentEditable) {
-			return;
+			return console.log('content editable');
 		}
 
 		// Safari ignores further event handling after mousedown
 		if (!this.nativeDraggable && Safari && target && target.tagName.toUpperCase() === 'SELECT') {
-			return;
+			return console.log('safari');
 		}
 
 		target = closest(target, options.draggable, el, false);
 
 
 		if (target && target.animated) {
-			return;
+			return console.log('animated');
 		}
 
 		if (lastDownEl === target) {
 			// Ignoring duplicate `down`
-			return;
+			return console.log('duplicate down');
 		}
 
 		// Get the index of the dragged element within its parent
@@ -610,7 +610,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 				});
 				pluginEvent('filter', _this, { evt });
 				preventOnFilter && evt.cancelable && evt.preventDefault();
-				return; // cancel dnd
+				return console.log('cancel dnd'); // cancel dnd
 			}
 		}
 		else if (filter) {
@@ -627,18 +627,23 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 						toEl: el
 					});
 					pluginEvent('filter', _this, { evt });
-					return true;
+					return console.log('criteria') || true;
 				}
 			});
 
 			if (filter) {
 				preventOnFilter && evt.cancelable && evt.preventDefault();
-				return; // cancel dnd
+				return console.log('cancel dnd (2)'); // cancel dnd
 			}
 		}
 
 		if (options.handle && !closest(originalTarget, options.handle, el, false)) {
-			return;
+			return console.log('not handle');
+		}
+
+		// Prevent default browser action
+		if (evt.cancelable) {
+			evt.preventDefault();
 		}
 
 		// Prepare `dragstart`
