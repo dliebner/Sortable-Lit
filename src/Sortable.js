@@ -638,6 +638,15 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		}
 
 		if (options.handle && !closest(originalTarget, options.handle, el, false)) {
+			// This is a click outside a handle. It's not a drag, but it could be a selection tap.
+			// Fire a 'tap' event for plugins to act upon.
+			pluginEvent('tap', this, {
+				evt,
+				targetEl: target,
+				putSortable: this,
+				rootEl: this.el,
+				parentEl: target.parentNode
+			});
 			return;
 		}
 

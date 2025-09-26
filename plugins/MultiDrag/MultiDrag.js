@@ -300,6 +300,83 @@ function MultiDragPlugin() {
 			}
 		},
 
+		_handleSelect({evt, targetEl, sortable, putSortable, rootEl, parentEl}) {
+
+			let options = this.options,
+				children = parentEl.children,
+				toSortable = (putSortable || this.sortable);
+
+			if (options.multiDragKey && !this.multiDragKeyDown) {
+				this._deselectMultiDrag();
+			}
+			toggleClass(targetEl, options.selectedClass, !~multiDragElements.indexOf(targetEl));
+
+			if (!~multiDragElements.indexOf(targetEl)) {
+				multiDragElements.push(targetEl);
+				dispatchEvent({
+					sortable,
+					rootEl,
+					name: 'select',
+					targetEl,
+					originalEvent: evt
+				});
+
+				// Modifier activated, select from last to targetEl
+				if (evt.shiftKey && lastMultiDragSelect && sortable.el.contains(lastMultiDragSelect)) {
+					let lastIndex = index(lastMultiDragSelect),
+						currentIndex = index(targetEl);
+
+					if (~lastIndex && ~currentIndex && lastIndex !== currentIndex) {
+						// Must include lastMultiDragSelect (select it), in case modified selection from no selection
+						// (but previous selection existed)
+						let n, i;
+						if (currentIndex > lastIndex) {
+							i = lastIndex;
+							n = currentIndex;
+						} else {
+							i = currentIndex;
+							n = lastIndex + 1;
+						}
+
+						for (; i < n; i++) {
+							if (~multiDragElements.indexOf(children[i])) continue;
+							toggleClass(children[i], options.selectedClass, true);
+							multiDragElements.push(children[i]);
+
+							dispatchEvent({
+								sortable,
+								rootEl,
+								name: 'select',
+								targetEl: children[i],
+								originalEvent: evt
+							});
+						}
+					}
+				} else {
+					lastMultiDragSelect = targetEl;
+				}
+
+				multiDragSortable = toSortable;
+			} else {
+				multiDragElements.splice(multiDragElements.indexOf(targetEl), 1);
+				lastMultiDragSelect = null;
+				dispatchEvent({
+					sortable,
+					rootEl,
+					name: 'deselect',
+					targetEl,
+					originalEvent: evt
+				});
+			}
+
+		},
+
+		// Handle non-drag tap
+		tap({ evt, targetEl, sortable, putSortable, rootEl, parentEl }) {
+			this._handleSelect({evt, targetEl, sortable, putSortable, rootEl, parentEl });
+		},
+
+		// Handle drop
 		drop({ originalEvent: evt, rootEl, parentEl, sortable, dispatchSortableEvent, oldIndex, dragAbortedByMove, putSortable }) {
 			let toSortable = (putSortable || this.sortable);
 
@@ -310,68 +387,7 @@ function MultiDragPlugin() {
 
 			// Multi-drag selection
 			if (!dragStarted && !dragAbortedByMove) {
-				if (options.multiDragKey && !this.multiDragKeyDown) {
-					this._deselectMultiDrag();
-				}
-				toggleClass(dragEl, options.selectedClass, !~multiDragElements.indexOf(dragEl));
-
-				if (!~multiDragElements.indexOf(dragEl)) {
-					multiDragElements.push(dragEl);
-					dispatchEvent({
-						sortable,
-						rootEl,
-						name: 'select',
-						targetEl: dragEl,
-						originalEvent: evt
-					});
-
-					// Modifier activated, select from last to dragEl
-					if (evt.shiftKey && lastMultiDragSelect && sortable.el.contains(lastMultiDragSelect)) {
-						let lastIndex = index(lastMultiDragSelect),
-							currentIndex = index(dragEl);
-
-						if (~lastIndex && ~currentIndex && lastIndex !== currentIndex) {
-							// Must include lastMultiDragSelect (select it), in case modified selection from no selection
-							// (but previous selection existed)
-							let n, i;
-							if (currentIndex > lastIndex) {
-								i = lastIndex;
-								n = currentIndex;
-							} else {
-								i = currentIndex;
-								n = lastIndex + 1;
-							}
-
-							for (; i < n; i++) {
-								if (~multiDragElements.indexOf(children[i])) continue;
-								toggleClass(children[i], options.selectedClass, true);
-								multiDragElements.push(children[i]);
-
-								dispatchEvent({
-									sortable,
-									rootEl,
-									name: 'select',
-									targetEl: children[i],
-									originalEvent: evt
-								});
-							}
-						}
-					} else {
-						lastMultiDragSelect = dragEl;
-					}
-
-					multiDragSortable = toSortable;
-				} else {
-					multiDragElements.splice(multiDragElements.indexOf(dragEl), 1);
-					lastMultiDragSelect = null;
-					dispatchEvent({
-						sortable,
-						rootEl,
-						name: 'deselect',
-						targetEl: dragEl,
-						originalEvent: evt
-					});
-				}
+				this._handleSelect({evt, targetEl: dragEl, sortable, putSortable, rootEl, parentEl});
 			}
 
 			// Multi-drag drop
