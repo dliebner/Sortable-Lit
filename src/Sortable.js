@@ -499,6 +499,9 @@ function Sortable(el, options) {
 		}
 	}
 
+	// Bind certain public methods
+	this._handleEvent = this.handleEvent.bind(this);
+
 	// Setup drag mode
 	this.nativeDraggable = options.forceFallback ? false : supportDraggable;
 
@@ -516,8 +519,8 @@ function Sortable(el, options) {
 	}
 
 	if (this.nativeDraggable) {
-		on(el, 'dragover', this);
-		on(el, 'dragenter', this);
+		on(el, 'dragover', this._handleEvent);
+		on(el, 'dragenter', this._handleEvent);
 	}
 
 	sortables.push(this.el);
@@ -669,8 +672,6 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 			this._lastX = (touch || evt).clientX;
 			this._lastY = (touch || evt).clientY;
-
-			dragEl.style['will-change'] = 'all';
 
 			dragStartFn = function () {
 				pluginEvent('delayEnded', _this, { evt });
@@ -1013,7 +1014,6 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			cloneEl = clone(dragEl);
 			cloneEl.removeAttribute("id");
 			cloneEl.draggable = false;
-			cloneEl.style['will-change'] = '';
 
 			this._hideClone();
 
@@ -1043,7 +1043,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 		// Set proper drop events
 		if (fallback) {
-			ignoreNextClick = true;
+			ignoreNextClick = evt.type !== 'touchmove'; // on mobile, the click event is not executed after a drop (touchmove)
 			_this._loopId = setInterval(_this._emulateDragOver, 50);
 		} else {
 			// Undo what was set in _prepareDragStart before drag started
@@ -1490,7 +1490,6 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 				}
 
 				_disableDraggable(dragEl);
-				dragEl.style['will-change'] = '';
 
 				// Remove classes
 				// ghostClass is added in dragStarted
@@ -1772,8 +1771,8 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 		off(el, 'pointerdown', this._onTapStart);
 
 		if (this.nativeDraggable) {
-			off(el, 'dragover', this);
-			off(el, 'dragenter', this);
+			off(el, 'dragover', this._handleEvent);
+			off(el, 'dragenter', this._handleEvent);
 		}
 		// Remove draggable attributes
 		Array.prototype.forEach.call(el.querySelectorAll('[draggable]'), function (el) {
