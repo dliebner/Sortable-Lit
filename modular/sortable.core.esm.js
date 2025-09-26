@@ -1383,7 +1383,7 @@ Sortable.prototype =
   _onTapStart: function _onTapStart(
   /** Event|TouchEvent */
   evt) {
-    if (!evt.cancelable) return console.log('not cancelable');
+    if (!evt.cancelable) return;
 
     var _this = this,
         el = this.el,
@@ -1399,32 +1399,32 @@ Sortable.prototype =
 
 
     if (dragEl) {
-      return console.log('dragEl set');
+      return;
     }
 
     if (/mousedown|pointerdown/.test(type) && evt.button !== 0 || options.disabled) {
-      return console.log('only left button and enabled'); // only left button and enabled
+      return; // only left button and enabled
     } // cancel dnd if original target is content editable
 
 
     if (originalTarget.isContentEditable) {
-      return console.log('content editable');
+      return;
     } // Safari ignores further event handling after mousedown
 
 
     if (!this.nativeDraggable && Safari && target && target.tagName.toUpperCase() === 'SELECT') {
-      return console.log('safari');
+      return;
     }
 
     target = closest(target, options.draggable, el, false);
 
     if (target && target.animated) {
-      return console.log('animated');
+      return;
     }
 
     if (lastDownEl === target) {
       // Ignoring duplicate `down`
-      return console.log('duplicate down');
+      return;
     } // Get the index of the dragged element within its parent
 
 
@@ -1446,7 +1446,7 @@ Sortable.prototype =
           evt
         });
         preventOnFilter && evt.cancelable && evt.preventDefault();
-        return console.log('cancel dnd'); // cancel dnd
+        return; // cancel dnd
       }
     } else if (filter) {
       filter = filter.split(',').some(function (criteria) {
@@ -1465,23 +1465,18 @@ Sortable.prototype =
           pluginEvent('filter', _this, {
             evt
           });
-          return console.log('criteria') || true;
+          return true;
         }
       });
 
       if (filter) {
         preventOnFilter && evt.cancelable && evt.preventDefault();
-        return console.log('cancel dnd (2)'); // cancel dnd
+        return; // cancel dnd
       }
     }
 
     if (options.handle && !closest(originalTarget, options.handle, el, false)) {
-      return console.log('not handle');
-    } // Prevent default browser action
-
-
-    if (evt.cancelable) {
-      evt.preventDefault();
+      return;
     } // Prepare `dragstart`
 
 
