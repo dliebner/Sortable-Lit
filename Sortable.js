@@ -1514,6 +1514,7 @@
         nextEl = dragEl.nextSibling;
         lastDownEl = target;
         activeGroup = options.group;
+        console.log(rootEl, dragEl, parentEl, nextEl, lastDownEl, activeGroup);
         Sortable.dragged = dragEl;
         tapEvt = {
           target: dragEl,

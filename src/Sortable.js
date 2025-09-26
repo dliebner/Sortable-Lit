@@ -666,6 +666,8 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			lastDownEl = target;
 			activeGroup = options.group;
 
+			console.log(rootEl, dragEl, parentEl, nextEl, lastDownEl, activeGroup);
+
 			Sortable.dragged = dragEl;
 
 			tapEvt = {
