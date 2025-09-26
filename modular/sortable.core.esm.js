@@ -2215,6 +2215,7 @@ Sortable.prototype =
   },
   _ignoreWhileAnimating: null,
   _offMoveEvents: function _offMoveEvents() {
+    console.trace('_offMoveEvents');
     off(document, 'mousemove', this._onTouchMove);
     off(document, 'touchmove', this._onTouchMove);
     off(document, 'pointermove', this._onTouchMove);
