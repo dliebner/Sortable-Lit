@@ -950,6 +950,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 	_appendGhost: function () {
 		// Bug if using scale(): https://stackoverflow.com/questions/2637058
 		// Not being adjusted for
+		console.log('_appendGhost', !!ghostEl);
 		if (!ghostEl) {
 			let container = this.options.fallbackOnBody ? document.body : rootEl,
 				rect = getRect(dragEl, true, PositionGhostAbsolutely, true, container),

@@ -1784,6 +1784,8 @@ Sortable.prototype =
   _appendGhost: function _appendGhost() {
     // Bug if using scale(): https://stackoverflow.com/questions/2637058
     // Not being adjusted for
+    console.log('_appendGhost', !!ghostEl);
+
     if (!ghostEl) {
       var container = this.options.fallbackOnBody ? document.body : rootEl,
           rect = getRect(dragEl, true, PositionGhostAbsolutely, true, container),
