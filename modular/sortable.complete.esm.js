@@ -1390,7 +1390,8 @@ Sortable.prototype =
         options = this.options,
         preventOnFilter = options.preventOnFilter,
         type = evt.type,
-        touch = evt.touches && evt.touches[0] || evt.pointerType && evt.pointerType === 'touch' && evt,
+        getTouchFromEvt = evt => evt.touches && evt.touches[0] || evt.pointerType && evt.pointerType === 'touch' && evt,
+        touch = getTouchFromEvt(evt),
         target = (touch || evt).target,
         originalTarget = evt.target.shadowRoot && (evt.path && evt.path[0] || evt.composedPath && evt.composedPath()[0]) || target,
         filter = options.filter;
@@ -1477,14 +1478,34 @@ Sortable.prototype =
 
     if (options.handle && !closest(originalTarget, options.handle, el, false)) {
       // This is a click outside a handle. It's not a drag, but it could be a selection tap.
-      // Fire a 'tap' event for plugins to act upon.
-      pluginEvent('tap', this, {
-        evt,
-        targetEl: target,
-        putSortable: this,
-        rootEl: this.el,
-        parentEl: target.parentNode
-      });
+      var touchLike = touch || evt,
+          downCoords = [touchLike.clientX, touchLike.clientY];
+
+      var _tapUpHandler = e => {
+        var touch = getTouchFromEvt(e),
+            touchLike = touch || e;
+
+        if (e.type !== 'touchcancel' && Math.hypot(touchLike.clientX - downCoords[0], touchLike.clientY - downCoords[1]) <= 3) {
+          // pointer moved <= 3 pixels
+          e.preventDefault(); // Fire a 'tap' event for plugins to act upon.
+
+          pluginEvent('tap', this, {
+            e,
+            targetEl: target,
+            putSortable: this,
+            rootEl: this.el,
+            parentEl: target.parentNode
+          });
+        }
+
+        document.removeEventListener('mouseup', _tapUpHandler);
+        document.removeEventListener('touchend', _tapUpHandler);
+        document.removeEventListener('touchcancel', _tapUpHandler);
+      };
+
+      document.addEventListener('mouseup', _tapUpHandler);
+      document.addEventListener('touchend', _tapUpHandler);
+      document.addEventListener('touchcancel', _tapUpHandler);
       return;
     } // Prepare `dragstart`
 
