@@ -938,6 +938,7 @@
       cloneEl,
       cloneHidden,
       dragStarted: moved,
+      dragAbortedByMove,
       putSortable,
       activeSortable: Sortable.active,
       originalEvent,
@@ -1080,6 +1081,7 @@
       activeGroup,
       putSortable,
       awaitingDragStarted = false,
+      dragAbortedByMove = false,
       ignoreNextClick = false,
       sortables = [],
       tapEvt,
@@ -1340,8 +1342,10 @@
       if (fn.charAt(0) === '_' && typeof this[fn] === 'function') {
         this[fn] = this[fn].bind(this);
       }
-    } // Setup drag mode
+    } // Bind certain public methods
 
+
+    this._handleEvent = this.handleEvent.bind(this); // Setup drag mode
 
     this.nativeDraggable = options.forceFallback ? false : supportDraggable;
 
@@ -1359,8 +1363,8 @@
     }
 
     if (this.nativeDraggable) {
-      on(el, 'dragover', this);
-      on(el, 'dragenter', this);
+      on(el, 'dragover', this._handleEvent);
+      on(el, 'dragenter', this._handleEvent);
     }
 
     sortables.push(this.el); // Restore sorting
@@ -1515,7 +1519,6 @@
         tapDistanceTop = tapEvt.clientY - dragRect.top;
         this._lastX = (touch || evt).clientX;
         this._lastY = (touch || evt).clientY;
-        dragEl.style['will-change'] = 'all';
 
         dragStartFn = function dragStartFn() {
           pluginEvent('delayEnded', _this, {
@@ -1598,6 +1601,8 @@
       var touch = e.touches ? e.touches[0] : e;
 
       if (Math.max(Math.abs(touch.clientX - this._lastX), Math.abs(touch.clientY - this._lastY)) >= Math.floor(this.options.touchStartThreshold / (this.nativeDraggable && window.devicePixelRatio || 1))) {
+        dragAbortedByMove = true;
+
         this._disableDelayedDrag();
       }
     },
@@ -1649,7 +1654,7 @@
     },
     _dragStarted: function _dragStarted(fallback, evt) {
 
-      awaitingDragStarted = false;
+      awaitingDragStarted = dragAbortedByMove = false;
 
       if (rootEl && dragEl) {
         pluginEvent('dragStarted', this, {
@@ -1844,7 +1849,6 @@
         cloneEl = clone(dragEl);
         cloneEl.removeAttribute("id");
         cloneEl.draggable = false;
-        cloneEl.style['will-change'] = '';
 
         this._hideClone();
 
@@ -1871,7 +1875,8 @@
       !fallback && toggleClass(dragEl, options.dragClass, true); // Set proper drop events
 
       if (fallback) {
-        ignoreNextClick = true;
+        ignoreNextClick = evt.type !== 'touchmove'; // on mobile, the click event is not executed after a drop (touchmove)
+
         _this._loopId = setInterval(_this._emulateDragOver, 50);
       } else {
         // Undo what was set in _prepareDragStart before drag started
@@ -1890,6 +1895,7 @@
       }
 
       awaitingDragStarted = true;
+      dragAbortedByMove = false;
       _this._dragStartId = _nextTick(_this._dragStarted.bind(_this, fallback, evt));
       on(document, 'selectstart', _this);
       moved = true;
@@ -2237,9 +2243,7 @@
         return;
       }
 
-      awaitingDragStarted = false;
-      isCircumstantialInvert = false;
-      pastFirstInvertThresh = false;
+      awaitingDragStarted = dragAbortedByMove = isCircumstantialInvert = pastFirstInvertThresh = false;
       clearInterval(this._loopId);
       clearTimeout(this._dragStartTimer);
 
@@ -2281,10 +2285,9 @@
             off(dragEl, 'dragend', this);
           }
 
-          _disableDraggable(dragEl);
-
-          dragEl.style['will-change'] = ''; // Remove classes
+          _disableDraggable(dragEl); // Remove classes
           // ghostClass is added in dragStarted
+
 
           if (moved && !awaitingDragStarted) {
             toggleClass(dragEl, putSortable ? putSortable.options.ghostClass : this.options.ghostClass, false);
@@ -2521,8 +2524,8 @@
       off(el, 'pointerdown', this._onTapStart);
 
       if (this.nativeDraggable) {
-        off(el, 'dragover', this);
-        off(el, 'dragenter', this);
+        off(el, 'dragover', this._handleEvent);
+        off(el, 'dragenter', this._handleEvent);
       } // Remove draggable attributes
 
 
@@ -3589,6 +3592,7 @@
           sortable,
           dispatchSortableEvent,
           oldIndex,
+          dragAbortedByMove,
           putSortable
         } = _ref12;
         var toSortable = putSortable || this.sortable;
@@ -3596,7 +3600,7 @@
         var options = this.options,
             children = parentEl.children; // Multi-drag selection
 
-        if (!dragStarted) {
+        if (!dragStarted && !dragAbortedByMove) {
           if (options.multiDragKey && !this.multiDragKeyDown) {
             this._deselectMultiDrag();
           }
