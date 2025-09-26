@@ -1833,7 +1833,8 @@
         css(ghostEl, 'zIndex', '100000');
         css(ghostEl, 'pointerEvents', 'none');
         Sortable.ghost = ghostEl;
-        container.appendChild(ghostEl); // Set transform-origin
+        container.appendChild(ghostEl);
+        console.log('created ghostEl', ghostEl); // Set transform-origin
 
         css(ghostEl, 'transform-origin', tapDistanceLeft / parseInt(ghostEl.style.width) * 100 + '% ' + tapDistanceTop / parseInt(ghostEl.style.height) * 100 + '%');
       }
