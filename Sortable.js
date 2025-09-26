@@ -1509,7 +1509,6 @@
         nextEl = dragEl.nextElementSibling;
         lastDownEl = target;
         activeGroup = options.group;
-        console.log(rootEl, dragEl, parentEl, nextEl, lastDownEl, activeGroup);
         Sortable.dragged = dragEl;
         tapEvt = {
           target: dragEl,
@@ -1529,7 +1528,7 @@
           if (Sortable.eventCanceled) {
             _this._onDrop();
 
-            return console.log('eventCanceled');
+            return;
           } // Delayed drag has been triggered
           // we can re-enable the events: touchmove/mousemove
 
@@ -1578,7 +1577,7 @@
           if (Sortable.eventCanceled) {
             this._onDrop();
 
-            return console.log('eventCanceled 2');
+            return;
           } // If the user moves the pointer or let go the click or touch
           // before the delay has been reached:
           // disable the delayed drag
@@ -1656,7 +1655,6 @@
     _dragStarted: function _dragStarted(fallback, evt) {
 
       awaitingDragStarted = dragAbortedByMove = false;
-      console.log('drag started?', rootEl, dragEl);
 
       if (rootEl && dragEl) {
         pluginEvent('dragStarted', this, {
@@ -1729,11 +1727,6 @@
     _onTouchMove: function _onTouchMove(
     /**TouchEvent*/
     evt) {
-      console.log({
-        tapEvt,
-        ghostEl
-      });
-
       if (tapEvt) {
         var options = this.options,
             fallbackTolerance = options.fallbackTolerance,
@@ -1748,7 +1741,7 @@
 
         if (!Sortable.active && !awaitingDragStarted) {
           if (fallbackTolerance && Math.max(Math.abs(touch.clientX - this._lastX), Math.abs(touch.clientY - this._lastY)) < fallbackTolerance) {
-            return console.log('are not actually dragging?');
+            return;
           }
 
           this._onDragStart(evt, true);
@@ -1785,8 +1778,6 @@
     _appendGhost: function _appendGhost() {
       // Bug if using scale(): https://stackoverflow.com/questions/2637058
       // Not being adjusted for
-      console.log('_appendGhost', !!ghostEl);
-
       if (!ghostEl) {
         var container = this.options.fallbackOnBody ? document.body : rootEl,
             rect = getRect(dragEl, true, PositionGhostAbsolutely, true, container),
@@ -1828,8 +1819,7 @@
         css(ghostEl, 'zIndex', '100000');
         css(ghostEl, 'pointerEvents', 'none');
         Sortable.ghost = ghostEl;
-        container.appendChild(ghostEl);
-        console.log('created ghostEl', ghostEl); // Set transform-origin
+        container.appendChild(ghostEl); // Set transform-origin
 
         css(ghostEl, 'transform-origin', tapDistanceLeft / parseInt(ghostEl.style.width) * 100 + '% ' + tapDistanceTop / parseInt(ghostEl.style.height) * 100 + '%');
       }
@@ -1850,7 +1840,7 @@
       if (Sortable.eventCanceled) {
         this._onDrop();
 
-        return console.log('eventCanceled 3');
+        return;
       }
 
       pluginEvent('setupClone', this);
@@ -1869,7 +1859,7 @@
 
       _this.cloneId = _nextTick(function () {
         pluginEvent('clone', _this);
-        if (Sortable.eventCanceled) return console.log('eventCanceled 4');
+        if (Sortable.eventCanceled) return;
 
         if (!_this.options.removeCloneOnHide) {
           insertBefore(rootEl, cloneEl, dragEl);
@@ -1887,7 +1877,6 @@
       if (fallback) {
         ignoreNextClick = evt.type !== 'touchmove'; // on mobile, the click event is not executed after a drop (touchmove)
 
-        console.log('ignoreNextClick', ignoreNextClick);
         _this._loopId = setInterval(_this._emulateDragOver, 50);
       } else {
         // Undo what was set in _prepareDragStart before drag started
@@ -2217,7 +2206,6 @@
     },
     _ignoreWhileAnimating: null,
     _offMoveEvents: function _offMoveEvents() {
-      console.trace('_offMoveEvents');
       off(document, 'mousemove', this._onTouchMove);
       off(document, 'touchmove', this._onTouchMove);
       off(document, 'pointermove', this._onTouchMove);
@@ -2237,8 +2225,7 @@
     /**Event*/
     evt) {
       var el = this.el,
-          options = this.options;
-      console.log('onDrop called'); // Get the index of the dragged element within its parent
+          options = this.options; // Get the index of the dragged element within its parent
 
       newIndex = index(dragEl);
       newDraggableIndex = index(dragEl, options.draggable);
