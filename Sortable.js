@@ -1490,6 +1490,7 @@
         var _tapUpHandler = e => {
           var touch = getTouchFromEvt(e),
               touchLike = touch || e;
+          console.log(e, touch);
 
           if (e.type !== 'touchcancel' && Math.hypot(touchLike.clientX - downCoords[0], touchLike.clientY - downCoords[1]) <= 3) {
             // pointer moved <= 3 pixels
