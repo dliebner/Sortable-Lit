@@ -686,7 +686,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 				pluginEvent('delayEnded', _this, { evt });
 				if (Sortable.eventCanceled) {
 					_this._onDrop();
-					return;
+					return console.log('eventCanceled');
 				}
 				// Delayed drag has been triggered
 				// we can re-enable the events: touchmove/mousemove
@@ -735,7 +735,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 			if (options.delay && (!options.delayOnTouchOnly || touch) && (!this.nativeDraggable || !(Edge || IE11OrLess))) {
 				if (Sortable.eventCanceled) {
 					this._onDrop();
-					return;
+					return console.log('eventCanceled 2');
 				}
 				// If the user moves the pointer or let go the click or touch
 				// before the delay has been reached:
@@ -887,6 +887,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 
 
 	_onTouchMove: function (/**TouchEvent*/evt) {
+		console.log({tapEvt, ghostEl});
 		if (tapEvt) {
 			let	options = this.options,
 				fallbackTolerance = options.fallbackTolerance,
@@ -908,7 +909,7 @@ Sortable.prototype = /** @lends Sortable.prototype */ {
 				if (fallbackTolerance &&
 					Math.max(Math.abs(touch.clientX - this._lastX), Math.abs(touch.clientY - this._lastY)) < fallbackTolerance
 				) {
-					return;
+					return console.log('are not actually dragging?');
 				}
 				this._onDragStart(evt, true);
 			}
