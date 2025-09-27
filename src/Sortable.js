@@ -19,6 +19,9 @@ import {
 	on,
 	off,
 	closest,
+	insertBefore,
+	appendChild,
+	removeChild,
 	toggleClass,
 	css,
 	matrix,
@@ -92,93 +95,7 @@ function _dispatchEvent(info) {
 	});
 }
 
-	
-/*****************************
- * Begin Lit customizations  *
- * * * * * * * * * * * * * * */
 
-/** @param {Element} node */
-function isEmptyCommentNode( node ) {
-
-	return node && node.nodeType === Node.COMMENT_NODE && node.nodeValue.trim() === '';
-
-}
-/**
- * @param {Element} node
- * @returns {Element[]|void} The Lit element and wrapping comments if it is a Lit element, otherwise `void`
- * */
-function getLitNodes( node ) {
-
-	if( isEmptyCommentNode( node.previousSibling ) && isEmptyCommentNode( node.nextSibling ) ) {
-
-		return [node.previousSibling, node, node.nextSibling];
-
-	}
-
-}
-
-/**
- * @param {Element} parentEl 
- * @param {Element} newNode 
- * @param {Element} referenceNode 
- */
-function insertBefore(parentEl, newNode, referenceNode) {
-
-	let referenceTarget = referenceNode;
-	const newNodes = getLitNodes(newNode) ?? [newNode];
-
-	if( getLitNodes(referenceNode) ) {
-
-		// Insert before the Lit comment
-		referenceTarget = referenceNode.previousSibling;
-
-	}
-
-	for( const node of newNodes ) {
-
-		parentEl.insertBefore(node, referenceTarget);
-
-	}
-
-	return newNode;
-
-}
-
-/**
- * @param {Element} parentEl 
- * @param {Element} newNode 
- */
-function appendChild(parentEl, newNode) {
-
-	const newNodes = getLitNodes(newNode) ?? [newNode];
-
-	for( const node of newNodes ) {
-
-		parentEl.appendChild(node);
-
-	}
-
-	return newNode;
-
-}
-
-/**
- * @param {Element} parentEl 
- * @param {Element} childNode 
- */
-function removeChild(parentEl, childNode) {
-
-	const removedChildren = getLitNodes(childNode) ?? [childNode];
-
-	for( const el of removedChildren ) {
-
-		parentEl.removeChild(el);
-
-	}
-
-	return removedChildren;
-
-}
 
 let /** The original element */dragEl,
 	parentEl,
@@ -2081,6 +1998,9 @@ Sortable.utils = {
 	},
 	extend: extend,
 	throttle: throttle,
+	insertBefore: insertBefore,
+	appendChild: appendChild,
+	removeChild: removeChild,
 	closest: closest,
 	toggleClass: toggleClass,
 	clone: clone,

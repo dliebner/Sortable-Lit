@@ -3,6 +3,9 @@ import {
 	getRect,
 	index,
 	closest,
+	insertBefore,
+	appendChild,
+	removeChild,
 	on,
 	off,
 	clone,
@@ -125,7 +128,7 @@ function MultiDragPlugin() {
 			multiDragClones.forEach(clone => {
 				css(clone, 'display', 'none');
 				if (this.options.removeCloneOnHide && clone.parentNode) {
-					clone.parentNode.removeChild(clone);
+					clone.parentNode.removeChild(clone); // multiDragClones are clones, don't have to worry about Lit comments
 				}
 			});
 
@@ -244,7 +247,7 @@ function MultiDragPlugin() {
 
 						// Move element(s) to end of parentEl so that it does not interfere with multi-drag clones insertion if they are inserted
 						// while folding, and so that we can capture them again because old sortable will no longer be fromSortable
-						parentEl.appendChild(multiDragElement);
+						appendChild(parentEl, multiDragElement);
 					});
 
 					folding = true;
@@ -426,9 +429,9 @@ function MultiDragPlugin() {
 
 						multiDragElements.forEach(multiDragElement => {
 							if (children[multiDragIndex]) {
-								parentEl.insertBefore(multiDragElement, children[multiDragIndex]);
+								insertBefore(parentEl, multiDragElement, children[multiDragIndex]);
 							} else {
-								parentEl.appendChild(multiDragElement);
+								appendChild(parentEl, multiDragElement);
 							}
 							multiDragIndex++;
 						});
@@ -466,7 +469,7 @@ function MultiDragPlugin() {
 			// Remove clones if necessary
 			if (rootEl === parentEl || (putSortable && putSortable.lastPutMode !== 'clone')) {
 				multiDragClones.forEach(clone => {
-					clone.parentNode && clone.parentNode.removeChild(clone);
+					clone.parentNode && clone.parentNode.removeChild(clone); // multiDragClones are clones, don't have to worry about Lit comments
 				});
 			}
 		},
@@ -605,9 +608,9 @@ function insertMultiDragElements(clonesInserted, rootEl) {
 	multiDragElements.forEach((multiDragElement, i) => {
 		let target = rootEl.children[multiDragElement.sortableIndex + (clonesInserted ? Number(i) : 0)];
 		if (target) {
-			rootEl.insertBefore(multiDragElement, target);
+			insertBefore(rootEl, multiDragElement, target);
 		} else {
-			rootEl.appendChild(multiDragElement);
+			appendChild(rootEl, multiDragElement);
 		}
 	});
 }
@@ -621,9 +624,9 @@ function insertMultiDragClones(elementsInserted, rootEl) {
 	multiDragClones.forEach((clone, i) => {
 		let target = rootEl.children[clone.sortableIndex + (elementsInserted ? Number(i) : 0)];
 		if (target) {
-			rootEl.insertBefore(clone, target);
+			rootEl.insertBefore(clone, target); // multiDragClones are clones, don't have to worry about Lit comments
 		} else {
-			rootEl.appendChild(clone);
+			rootEl.appendChild(clone); // multiDragClones are clones, don't have to worry about Lit comments
 		}
 	});
 }
@@ -631,7 +634,7 @@ function insertMultiDragClones(elementsInserted, rootEl) {
 function removeMultiDragElements() {
 	multiDragElements.forEach(multiDragElement => {
 		if (multiDragElement === dragEl) return;
-		multiDragElement.parentNode && multiDragElement.parentNode.removeChild(multiDragElement);
+		multiDragElement.parentNode && removeChild(multiDragElement.parentNode, multiDragElement);
 	});
 }
 
