@@ -3908,12 +3908,16 @@ function MultiDragPlugin() {
        * Move all currently selected items up by one slot
        */
       moveSelectedUp() {
-        var selectedSet = new Set(multiDragElements);
-        multiDragElements.forEach(item => {
+        if (!multiDragSortable || !multiDragElements.length) return;
+        var parentEl = multiDragSortable.el; // Sort ascending to move top items first, preventing conflicts
+
+        var sortedItems = [...multiDragElements].sort((a, b) => index(a) - index(b));
+        var selectedSet = new Set(sortedItems);
+        sortedItems.forEach(item => {
           var prev = item.previousElementSibling;
 
           if (prev && !selectedSet.has(prev)) {
-            item.parentNode.insertBefore(item, prev);
+            parentEl.insertBefore(item, prev);
           }
         });
       },
@@ -3922,13 +3926,16 @@ function MultiDragPlugin() {
        * Move all currently selected items down by one slot
        */
       moveSelectedDown() {
-        var selected = [...multiDragElements].reverse(),
-            selectedSet = new Set(selected);
-        selected.forEach(item => {
+        if (!multiDragSortable || !multiDragElements.length) return;
+        var parentEl = multiDragSortable.el; // Sort descending to move bottom items first, preventing conflicts
+
+        var sortedItems = [...multiDragElements].sort((a, b) => index(b) - index(a));
+        var selectedSet = new Set(sortedItems);
+        sortedItems.forEach(item => {
           var next = item.nextElementSibling;
 
           if (next && !selectedSet.has(next)) {
-            next.parentNode.insertBefore(item, next.nextSibling);
+            parentEl.insertBefore(item, next.nextElementSibling);
           }
         });
       },
@@ -3937,21 +3944,21 @@ function MultiDragPlugin() {
        * Move all currently selected items to the top of the list
        */
       moveSelectedToTop() {
-        var parent = multiDragSortable && multiDragSortable.el;
-        if (!parent) return;
-        [...multiDragElements].forEach(item => {
-          parent.insertBefore(item, parent.firstChild);
-        });
+        var parentEl = multiDragSortable && multiDragSortable.el;
+        if (!parentEl) return;
+        var sortedItems = multiDragElements.sort((a, b) => index(a) - index(b));
+        parentEl.prepend(...sortedItems);
       },
 
       /**
        * Move all currently selected items to the bottom of the list
        */
       moveSelectedToBottom() {
-        var parent = multiDragSortable && multiDragSortable.el;
-        if (!parent) return;
-        [...multiDragElements].forEach(item => {
-          parent.appendChild(item);
+        var parentEl = multiDragSortable && multiDragSortable.el;
+        if (!parentEl) return;
+        var sortedItems = multiDragElements.sort((a, b) => index(a) - index(b));
+        sortedItems.forEach(item => {
+          parentEl.appendChild(item);
         });
       }
 
