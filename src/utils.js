@@ -650,7 +650,6 @@ export {
 	matches,
 	getParentOrHost,
 	closest,
-	getLitNodes,
 	insertBefore,
 	appendChild,
 	removeChild,

@@ -3,7 +3,6 @@ import {
 	getRect,
 	index,
 	closest,
-	getLitNodes,
 	insertBefore,
 	appendChild,
 	removeChild,
@@ -20,8 +19,6 @@ import {
 import dispatchEvent from '../../src/EventDispatcher.js';
 
 let multiDragElements = [],
-	/** @type {Map|undefined} */
-	removedMultiDragElements, // compensating for Lit, each entry is an array of removed nodes for each item
 	multiDragClones = [],
 	lastMultiDragSelect, // for selection with modifier key down (SHIFT)
 	multiDragSortable,
@@ -611,13 +608,11 @@ function insertMultiDragElements(clonesInserted, rootEl) {
 	multiDragElements.forEach((multiDragElement, i) => {
 		let target = rootEl.children[multiDragElement.sortableIndex + (clonesInserted ? Number(i) : 0)];
 		if (target) {
-			(removedMultiDragElements?.get(multiDragElement) ?? getLitNodes(multiDragElement) ?? [multiDragElement])
-				.forEach(node => insertBefore(rootEl, node, target));
+			insertBefore(rootEl, multiDragElement, target);
 		} else {
 			appendChild(rootEl, multiDragElement);
 		}
 	});
-	removedMultiDragElements = undefined;
 }
 
 /**
@@ -637,15 +632,10 @@ function insertMultiDragClones(elementsInserted, rootEl) {
 }
 
 function removeMultiDragElements() {
-	let newRemovedMultiDragElements = new Map();
 	multiDragElements.forEach(multiDragElement => {
 		if (multiDragElement === dragEl) return;
-		if (multiDragElement.parentNode) newRemovedMultiDragElements.set(
-			multiDragElement,
-			removeChild(multiDragElement.parentNode, multiDragElement)
-		);
+		multiDragElement.parentNode && removeChild(multiDragElement.parentNode, multiDragElement);
 	});
-	if( newRemovedMultiDragElements.size ) removedMultiDragElements = newRemovedMultiDragElements;
 }
 
 export default MultiDragPlugin;
