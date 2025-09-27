@@ -554,6 +554,51 @@ function MultiDragPlugin() {
 				if (!sortable || !sortable.options.multiDrag || !~index) return;
 				toggleClass(el, sortable.options.selectedClass, false);
 				multiDragElements.splice(index, 1);
+			},
+			/**
+			 * Move all currently selected items up by one slot
+			 */
+			moveSelectedUp() {
+				const selectedSet = new Set( multiDragElements );
+				multiDragElements.forEach(item => {
+					const prev = item.previousElementSibling;
+					if (prev && !selectedSet.has(prev)) {
+						item.parentNode.insertBefore(item, prev);
+					}
+				});
+			},
+			/**
+			 * Move all currently selected items down by one slot
+			 */
+			moveSelectedDown() {
+				const selected = [...multiDragElements].reverse(),
+				selectedSet = new Set( selected );
+				selected.forEach(item => {
+					const next = item.nextElementSibling;
+					if (next && !selectedSet.has(next)) {
+						next.parentNode.insertBefore(item, next.nextSibling);
+					}
+				});
+			},
+			/**
+			 * Move all currently selected items to the top of the list
+			 */
+			moveSelectedToTop() {
+				const parent = multiDragSortable && multiDragSortable.el;
+				if (!parent) return;
+				[...multiDragElements].forEach(item => {
+					parent.insertBefore(item, parent.firstChild);
+				});
+			},
+			/**
+			 * Move all currently selected items to the bottom of the list
+			 */
+			moveSelectedToBottom() {
+				const parent = multiDragSortable && multiDragSortable.el;
+				if (!parent) return;
+				[...multiDragElements].forEach(item => {
+					parent.appendChild(item);
+				});
 			}
 		},
 		eventProperties() {
