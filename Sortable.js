@@ -196,6 +196,89 @@
 
     return null;
   }
+  /*****************************
+   * Begin Lit customizations  *
+   * * * * * * * * * * * * * * */
+
+  /** @param {Element} node */
+
+
+  function isEmptyCommentNode(node) {
+    return node && node.nodeType === Node.COMMENT_NODE && node.nodeValue.trim() === '';
+  }
+  /**
+   * @param {Element} node
+   * @returns {Element[]|void} The Lit element and wrapping comments if it is a Lit element, otherwise `void`
+   * */
+
+
+  function getLitNodes(node) {
+    if (isEmptyCommentNode(node.previousSibling) && isEmptyCommentNode(node.nextSibling)) {
+      return [node.previousSibling, node, node.nextSibling];
+    }
+  }
+  /**
+   * @param {Element} parentEl 
+   * @param {Element} newNode 
+   * @param {Element} referenceNode 
+   */
+
+
+  function insertBefore(parentEl, newNode, referenceNode) {
+    var _getLitNodes;
+
+    var referenceTarget = referenceNode;
+    var newNodes = (_getLitNodes = getLitNodes(newNode)) !== null && _getLitNodes !== void 0 ? _getLitNodes : [newNode];
+
+    if (getLitNodes(referenceNode)) {
+      // Insert before the Lit comment
+      referenceTarget = referenceNode.previousSibling;
+    }
+
+    for (var node of newNodes) {
+      parentEl.insertBefore(node, referenceTarget);
+    }
+
+    return newNode;
+  }
+  /**
+   * @param {Element} parentEl 
+   * @param {Element} newNode 
+   */
+
+
+  function appendChild(parentEl, newNode) {
+    var _getLitNodes2;
+
+    var newNodes = (_getLitNodes2 = getLitNodes(newNode)) !== null && _getLitNodes2 !== void 0 ? _getLitNodes2 : [newNode];
+
+    for (var node of newNodes) {
+      parentEl.appendChild(node);
+    }
+
+    return newNode;
+  }
+  /**
+   * @param {Element} parentEl 
+   * @param {Element} childNode 
+   */
+
+
+  function removeChild(parentEl, childNode) {
+    var _getLitNodes3;
+
+    var removedChildren = (_getLitNodes3 = getLitNodes(childNode)) !== null && _getLitNodes3 !== void 0 ? _getLitNodes3 : [childNode];
+
+    for (var el of removedChildren) {
+      parentEl.removeChild(el);
+    }
+
+    return removedChildren;
+  }
+  /*****************************
+   * End Lit customizations  *
+   * * * * * * * * * * * * * * */
+
 
   var R_SPACE = /\s+/g;
 
@@ -979,85 +1062,6 @@
       newIndex,
       newDraggableIndex
     }, info));
-  }
-  /*****************************
-   * Begin Lit customizations  *
-   * * * * * * * * * * * * * * */
-
-  /** @param {Element} node */
-
-
-  function isEmptyCommentNode(node) {
-    return node && node.nodeType === Node.COMMENT_NODE && node.nodeValue.trim() === '';
-  }
-  /**
-   * @param {Element} node
-   * @returns {Element[]|void} The Lit element and wrapping comments if it is a Lit element, otherwise `void`
-   * */
-
-
-  function getLitNodes(node) {
-    if (isEmptyCommentNode(node.previousSibling) && isEmptyCommentNode(node.nextSibling)) {
-      return [node.previousSibling, node, node.nextSibling];
-    }
-  }
-  /**
-   * @param {Element} parentEl 
-   * @param {Element} newNode 
-   * @param {Element} referenceNode 
-   */
-
-
-  function insertBefore(parentEl, newNode, referenceNode) {
-    var _getLitNodes;
-
-    var referenceTarget = referenceNode;
-    var newNodes = (_getLitNodes = getLitNodes(newNode)) !== null && _getLitNodes !== void 0 ? _getLitNodes : [newNode];
-
-    if (getLitNodes(referenceNode)) {
-      // Insert before the Lit comment
-      referenceTarget = referenceNode.previousSibling;
-    }
-
-    for (var node of newNodes) {
-      parentEl.insertBefore(node, referenceTarget);
-    }
-
-    return newNode;
-  }
-  /**
-   * @param {Element} parentEl 
-   * @param {Element} newNode 
-   */
-
-
-  function appendChild(parentEl, newNode) {
-    var _getLitNodes2;
-
-    var newNodes = (_getLitNodes2 = getLitNodes(newNode)) !== null && _getLitNodes2 !== void 0 ? _getLitNodes2 : [newNode];
-
-    for (var node of newNodes) {
-      parentEl.appendChild(node);
-    }
-
-    return newNode;
-  }
-  /**
-   * @param {Element} parentEl 
-   * @param {Element} childNode 
-   */
-
-
-  function removeChild(parentEl, childNode) {
-    var _getLitNodes3;
-
-    var removedChildren = (_getLitNodes3 = getLitNodes(childNode)) !== null && _getLitNodes3 !== void 0 ? _getLitNodes3 : [childNode];
-
-    for (var el of removedChildren) {
-      parentEl.removeChild(el);
-    }
-
-    return removedChildren;
   }
 
   var
@@ -2789,6 +2793,9 @@
     },
     extend: extend,
     throttle: throttle,
+    insertBefore: insertBefore,
+    appendChild: appendChild,
+    removeChild: removeChild,
     closest: closest,
     toggleClass: toggleClass,
     clone: clone,
@@ -3414,7 +3421,7 @@
           css(clone, 'display', 'none');
 
           if (this.options.removeCloneOnHide && clone.parentNode) {
-            clone.parentNode.removeChild(clone);
+            clone.parentNode.removeChild(clone); // multiDragClones are clones, don't have to worry about Lit comments
           }
         });
         cloneNowHidden();
@@ -3549,7 +3556,7 @@
               setRect(multiDragElement, dragRectAbsolute); // Move element(s) to end of parentEl so that it does not interfere with multi-drag clones insertion if they are inserted
               // while folding, and so that we can capture them again because old sortable will no longer be fromSortable
 
-              parentEl.appendChild(multiDragElement);
+              appendChild(parentEl, multiDragElement);
             });
             folding = true;
           } // Clones must be shown (and check to remove multi drags) after folding when interfering multiDragElements are moved out
@@ -3768,9 +3775,9 @@
               removeMultiDragElements();
               multiDragElements.forEach(multiDragElement => {
                 if (children[multiDragIndex]) {
-                  parentEl.insertBefore(multiDragElement, children[multiDragIndex]);
+                  insertBefore(parentEl, multiDragElement, children[multiDragIndex]);
                 } else {
-                  parentEl.appendChild(multiDragElement);
+                  appendChild(parentEl, multiDragElement);
                 }
 
                 multiDragIndex++;
@@ -3807,7 +3814,7 @@
 
         if (rootEl === parentEl || putSortable && putSortable.lastPutMode !== 'clone') {
           multiDragClones.forEach(clone => {
-            clone.parentNode && clone.parentNode.removeChild(clone);
+            clone.parentNode && clone.parentNode.removeChild(clone); // multiDragClones are clones, don't have to worry about Lit comments
           });
         }
       },
@@ -3953,9 +3960,9 @@
       var target = rootEl.children[multiDragElement.sortableIndex + (clonesInserted ? Number(i) : 0)];
 
       if (target) {
-        rootEl.insertBefore(multiDragElement, target);
+        insertBefore(rootEl, multiDragElement, target);
       } else {
-        rootEl.appendChild(multiDragElement);
+        appendChild(rootEl, multiDragElement);
       }
     });
   }
@@ -3971,9 +3978,9 @@
       var target = rootEl.children[clone.sortableIndex + (elementsInserted ? Number(i) : 0)];
 
       if (target) {
-        rootEl.insertBefore(clone, target);
+        rootEl.insertBefore(clone, target); // multiDragClones are clones, don't have to worry about Lit comments
       } else {
-        rootEl.appendChild(clone);
+        rootEl.appendChild(clone); // multiDragClones are clones, don't have to worry about Lit comments
       }
     });
   }
@@ -3981,7 +3988,7 @@
   function removeMultiDragElements() {
     multiDragElements.forEach(multiDragElement => {
       if (multiDragElement === dragEl$1) return;
-      multiDragElement.parentNode && multiDragElement.parentNode.removeChild(multiDragElement);
+      multiDragElement.parentNode && removeChild(multiDragElement.parentNode, multiDragElement);
     });
   }
 
