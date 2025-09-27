@@ -206,24 +206,6 @@
   function isEmptyCommentNode(node) {
     return node && node.nodeType === Node.COMMENT_NODE && node.nodeValue.trim() === '';
   }
-  /** @param {Element} node */
-
-
-  function isEmptyTextNode(node) {
-    return node && node.nodeType === Node.TEXT_NODE && node.nodeValue.trim() === '';
-  }
-  /** @param {Element} node */
-
-
-  function gatherPrevEmptyCommentNodes(node) {
-    return isEmptyCommentNode(node) ? [node] : node && isEmptyTextNode(node) && isEmptyCommentNode(node.previousSibling) ? [node.previousSibling, node] : null;
-  }
-  /** @param {Element} node */
-
-
-  function gatherNextEmptyCommentNodes(node) {
-    return isEmptyCommentNode(node) ? [node] : node && isEmptyTextNode(node) && isEmptyCommentNode(node.nextSibling) ? [node, node.nextSibling] : null;
-  }
   /**
    * @param {Element} node
    * @returns {Element[]|void} The Lit element and wrapping comments if its a Lit element, otherwise `void`
@@ -231,11 +213,8 @@
 
 
   function getLitNodes(node) {
-    var prevEmptyCommentNodes = gatherPrevEmptyCommentNodes(node.previousSibling),
-        nextEmptyCommentNodes = gatherNextEmptyCommentNodes(node.nextSibling);
-
-    if (prevEmptyCommentNodes && nextEmptyCommentNodes) {
-      return [...prevEmptyCommentNodes, node, ...nextEmptyCommentNodes];
+    if (isEmptyCommentNode(node.previousSibling) && isEmptyCommentNode(node.nextSibling)) {
+      return [node.previousSibling, node, node.nextSibling];
     }
   }
   /**
@@ -249,12 +228,11 @@
     var _getLitNodes;
 
     var referenceTarget = referenceNode;
-    var newNodes = (_getLitNodes = getLitNodes(newNode)) !== null && _getLitNodes !== void 0 ? _getLitNodes : [newNode],
-        referenceNodes = getLitNodes(referenceNode);
+    var newNodes = (_getLitNodes = getLitNodes(newNode)) !== null && _getLitNodes !== void 0 ? _getLitNodes : [newNode];
 
-    if (referenceNodes) {
+    if (getLitNodes(referenceNode)) {
       // Insert before the Lit comment
-      referenceTarget = referenceNodes[0];
+      referenceTarget = referenceNode.previousSibling;
     }
 
     for (var node of newNodes) {
@@ -3307,11 +3285,7 @@
   }
 
   var multiDragElements = [],
-
-  /** @type {Map|undefined} */
-  removedMultiDragElements,
-      // compensating for Lit, each entry is an array of removed nodes for each item
-  multiDragClones = [],
+      multiDragClones = [],
       lastMultiDragSelect,
       // for selection with modifier key down (SHIFT)
   multiDragSortable,
@@ -3447,7 +3421,7 @@
           css(clone, 'display', 'none');
 
           if (this.options.removeCloneOnHide && clone.parentNode) {
-            clone.parentNode.removeChild(clone); // multiDragClones are clones, don't have to worry about Lit comments
+            clone.parentNode.removeChild(clone);
           }
         });
         cloneNowHidden();
@@ -3582,7 +3556,7 @@
               setRect(multiDragElement, dragRectAbsolute); // Move element(s) to end of parentEl so that it does not interfere with multi-drag clones insertion if they are inserted
               // while folding, and so that we can capture them again because old sortable will no longer be fromSortable
 
-              appendChild(parentEl, multiDragElement);
+              parentEl.appendChild(multiDragElement);
             });
             folding = true;
           } // Clones must be shown (and check to remove multi drags) after folding when interfering multiDragElements are moved out
@@ -3801,9 +3775,9 @@
               removeMultiDragElements();
               multiDragElements.forEach(multiDragElement => {
                 if (children[multiDragIndex]) {
-                  insertBefore(parentEl, multiDragElement, children[multiDragIndex]);
+                  parentEl.insertBefore(multiDragElement, children[multiDragIndex]);
                 } else {
-                  appendChild(parentEl, multiDragElement);
+                  parentEl.appendChild(multiDragElement);
                 }
 
                 multiDragIndex++;
@@ -3840,7 +3814,7 @@
 
         if (rootEl === parentEl || putSortable && putSortable.lastPutMode !== 'clone') {
           multiDragClones.forEach(clone => {
-            clone.parentNode && clone.parentNode.removeChild(clone); // multiDragClones are clones, don't have to worry about Lit comments
+            clone.parentNode && clone.parentNode.removeChild(clone);
           });
         }
       },
@@ -3928,6 +3902,57 @@
           if (!sortable || !sortable.options.multiDrag || !~index) return;
           toggleClass(el, sortable.options.selectedClass, false);
           multiDragElements.splice(index, 1);
+        },
+
+        /**
+         * Move all currently selected items up by one slot
+         */
+        moveSelectedUp() {
+          var selectedSet = new Set(multiDragElements);
+          multiDragElements.forEach(item => {
+            var prev = item.previousElementSibling;
+
+            if (prev && !selectedSet.has(prev)) {
+              item.parentNode.insertBefore(item, prev);
+            }
+          });
+        },
+
+        /**
+         * Move all currently selected items down by one slot
+         */
+        moveSelectedDown() {
+          var selected = [...multiDragElements].reverse(),
+              selectedSet = new Set(selected);
+          selected.forEach(item => {
+            var next = item.nextElementSibling;
+
+            if (next && !selectedSet.has(next)) {
+              next.parentNode.insertBefore(item, next.nextSibling);
+            }
+          });
+        },
+
+        /**
+         * Move all currently selected items to the top of the list
+         */
+        moveSelectedToTop() {
+          var parent = multiDragSortable && multiDragSortable.el;
+          if (!parent) return;
+          [...multiDragElements].forEach(item => {
+            parent.insertBefore(item, parent.firstChild);
+          });
+        },
+
+        /**
+         * Move all currently selected items to the bottom of the list
+         */
+        moveSelectedToBottom() {
+          var parent = multiDragSortable && multiDragSortable.el;
+          if (!parent) return;
+          [...multiDragElements].forEach(item => {
+            parent.appendChild(item);
+          });
         }
 
       },
@@ -3986,14 +4011,11 @@
       var target = rootEl.children[multiDragElement.sortableIndex + (clonesInserted ? Number(i) : 0)];
 
       if (target) {
-        var _ref15, _removedMultiDragElem, _removedMultiDragElem2;
-
-        ((_ref15 = (_removedMultiDragElem = (_removedMultiDragElem2 = removedMultiDragElements) === null || _removedMultiDragElem2 === void 0 ? void 0 : _removedMultiDragElem2.get(multiDragElement)) !== null && _removedMultiDragElem !== void 0 ? _removedMultiDragElem : getLitNodes(multiDragElement)) !== null && _ref15 !== void 0 ? _ref15 : [multiDragElement]).forEach(node => insertBefore(rootEl, node, target));
+        rootEl.insertBefore(multiDragElement, target);
       } else {
-        appendChild(rootEl, multiDragElement);
+        rootEl.appendChild(multiDragElement);
       }
     });
-    removedMultiDragElements = undefined;
   }
   /**
    * Insert multi-drag clones
@@ -4007,20 +4029,18 @@
       var target = rootEl.children[clone.sortableIndex + (elementsInserted ? Number(i) : 0)];
 
       if (target) {
-        rootEl.insertBefore(clone, target); // multiDragClones are clones, don't have to worry about Lit comments
+        rootEl.insertBefore(clone, target);
       } else {
-        rootEl.appendChild(clone); // multiDragClones are clones, don't have to worry about Lit comments
+        rootEl.appendChild(clone);
       }
     });
   }
 
   function removeMultiDragElements() {
-    var newRemovedMultiDragElements = new Map();
     multiDragElements.forEach(multiDragElement => {
       if (multiDragElement === dragEl$1) return;
-      if (multiDragElement.parentNode) newRemovedMultiDragElements.set(multiDragElement, removeChild(multiDragElement.parentNode, multiDragElement));
+      multiDragElement.parentNode && multiDragElement.parentNode.removeChild(multiDragElement);
     });
-    if (newRemovedMultiDragElements.size) removedMultiDragElements = newRemovedMultiDragElements;
   }
 
   Sortable.mount(new AutoScrollPlugin());
