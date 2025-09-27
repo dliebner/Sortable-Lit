@@ -79,15 +79,41 @@ function isEmptyCommentNode( node ) {
 
 }
 
+/** @param {Element} node */
+function isEmptyTextNode( node ) {
+
+	return node && node.nodeType === Node.TEXT_NODE && node.nodeValue.trim() === '';
+
+}
+
+/** @param {Element} node */
+function gatherPrevEmptyCommentNodes( node ) {
+
+	return isEmptyCommentNode(node) ? [node] :
+		( node && isEmptyTextNode(node) && isEmptyCommentNode(node.previousSibling) ) ? [node.previousSibling, node] : null;
+
+}
+
+/** @param {Element} node */
+function gatherNextEmptyCommentNodes( node ) {
+
+	return isEmptyCommentNode(node) ? [node] :
+		( node && isEmptyTextNode(node) && isEmptyCommentNode(node.nextSibling) ) ? [node, node.nextSibling] : null;
+
+}
+
 /**
  * @param {Element} node
- * @returns {Element[]|void} The Lit element and wrapping comments if it is a Lit element, otherwise `void`
+ * @returns {Element[]|void} The Lit element and wrapping comments if its a Lit element, otherwise `void`
  * */
 function getLitNodes( node ) {
 
-	if( isEmptyCommentNode( node.previousSibling ) && isEmptyCommentNode( node.nextSibling ) ) {
+	const prevEmptyCommentNodes = gatherPrevEmptyCommentNodes( node.previousSibling ),
+	nextEmptyCommentNodes = gatherNextEmptyCommentNodes( node.nextSibling );
 
-		return [node.previousSibling, node, node.nextSibling];
+	if( prevEmptyCommentNodes && nextEmptyCommentNodes ) {
+
+		return [...prevEmptyCommentNodes, node, ...nextEmptyCommentNodes];
 
 	}
 
@@ -101,12 +127,13 @@ function getLitNodes( node ) {
 function insertBefore(parentEl, newNode, referenceNode) {
 
 	let referenceTarget = referenceNode;
-	const newNodes = getLitNodes(newNode) ?? [newNode];
+	const newNodes = getLitNodes(newNode) ?? [newNode],
+	referenceNodes = getLitNodes(referenceNode);
 
-	if( getLitNodes(referenceNode) ) {
+	if( referenceNodes ) {
 
 		// Insert before the Lit comment
-		referenceTarget = referenceNode.previousSibling;
+		referenceTarget = referenceNodes[0];
 
 	}
 
