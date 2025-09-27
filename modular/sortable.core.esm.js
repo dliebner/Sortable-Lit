@@ -3439,7 +3439,7 @@ function MultiDragPlugin() {
         css(clone, 'display', 'none');
 
         if (this.options.removeCloneOnHide && clone.parentNode) {
-          removeChild(clone.parentNode, clone);
+          clone.parentNode.removeChild(clone); // multiDragClones are clones, don't have to worry about Lit comments
         }
       });
       cloneNowHidden();
@@ -3832,7 +3832,7 @@ function MultiDragPlugin() {
 
       if (rootEl === parentEl || putSortable && putSortable.lastPutMode !== 'clone') {
         multiDragClones.forEach(clone => {
-          clone.parentNode && removeChild(clone.parentNode, clone);
+          clone.parentNode && clone.parentNode.removeChild(clone); // multiDragClones are clones, don't have to worry about Lit comments
         });
       }
     },
@@ -3996,9 +3996,9 @@ function insertMultiDragClones(elementsInserted, rootEl) {
     var target = rootEl.children[clone.sortableIndex + (elementsInserted ? Number(i) : 0)];
 
     if (target) {
-      insertBefore(rootEl, clone, target);
+      rootEl.insertBefore(clone, target); // multiDragClones are clones, don't have to worry about Lit comments
     } else {
-      appendChild(rootEl, clone);
+      rootEl.appendChild(clone); // multiDragClones are clones, don't have to worry about Lit comments
     }
   });
 }
