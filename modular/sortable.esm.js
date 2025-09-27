@@ -3301,7 +3301,11 @@ function swapNodes(n1, n2) {
 }
 
 var multiDragElements = [],
-    multiDragClones = [],
+
+/** @type {Map|undefined} */
+removedMultiDragElements,
+    // compensating for Lit, each entry is an array of removed nodes for each item
+multiDragClones = [],
     lastMultiDragSelect,
     // for selection with modifier key down (SHIFT)
 multiDragSortable,
@@ -3976,11 +3980,14 @@ function insertMultiDragElements(clonesInserted, rootEl) {
     var target = rootEl.children[multiDragElement.sortableIndex + (clonesInserted ? Number(i) : 0)];
 
     if (target) {
-      insertBefore(rootEl, multiDragElement, target);
+      var _ref15, _removedMultiDragElem, _removedMultiDragElem2;
+
+      ((_ref15 = (_removedMultiDragElem = (_removedMultiDragElem2 = removedMultiDragElements) === null || _removedMultiDragElem2 === void 0 ? void 0 : _removedMultiDragElem2.get(multiDragElement)) !== null && _removedMultiDragElem !== void 0 ? _removedMultiDragElem : getLitNodes(multiDragElement)) !== null && _ref15 !== void 0 ? _ref15 : [multiDragElement]).forEach(node => insertBefore(rootEl, node, target));
     } else {
       appendChild(rootEl, multiDragElement);
     }
   });
+  removedMultiDragElements = undefined;
 }
 /**
  * Insert multi-drag clones
@@ -4002,10 +4009,12 @@ function insertMultiDragClones(elementsInserted, rootEl) {
 }
 
 function removeMultiDragElements() {
+  var newRemovedMultiDragElements = new Map();
   multiDragElements.forEach(multiDragElement => {
     if (multiDragElement === dragEl$1) return;
-    multiDragElement.parentNode && removeChild(multiDragElement.parentNode, multiDragElement);
+    if (multiDragElement.parentNode) newRemovedMultiDragElements.set(multiDragElement, removeChild(multiDragElement.parentNode, multiDragElement));
   });
+  if (newRemovedMultiDragElements.size) removedMultiDragElements = newRemovedMultiDragElements;
 }
 
 Sortable.mount(new AutoScrollPlugin());
