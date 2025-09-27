@@ -51,6 +51,7 @@ function MultiDragPlugin() {
 			selectedClass: 'sortable-selected',
 			multiDragKey: null,
 			avoidImplicitDeselect: false,
+			deselectWhitelist: null,
 			setData(dataTransfer, dragEl) {
 				let data = '';
 				if (multiDragElements.length && multiDragSortable === sortable) {
@@ -493,15 +494,20 @@ function MultiDragPlugin() {
 			// Only deselect if selection is in this sortable
 			if (multiDragSortable !== this.sortable) return;
 
+			const options = this.options;
+
 			// Only deselect if target is not item in this sortable
-			if (evt && closest(evt.target, this.options.draggable, this.sortable.el, false)) return;
+			if (evt && closest(evt.target, options.draggable, this.sortable.el, false)) return;
+
+			// Don't deselect if whitelisted element clicked
+			if( evt && options.deselectWhitelist && evt.target.closest(options.deselectWhitelist) ) return;
 
 			// Only deselect if left click
 			if (evt && evt.button !== 0) return;
 
 			while (multiDragElements.length) {
 				let el = multiDragElements[0];
-				toggleClass(el, this.options.selectedClass, false);
+				toggleClass(el, options.selectedClass, false);
 				multiDragElements.shift();
 				dispatchEvent({
 					sortable: this.sortable,
